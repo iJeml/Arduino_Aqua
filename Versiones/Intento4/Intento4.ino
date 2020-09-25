@@ -45,9 +45,9 @@ int Dimm;
 int DimMAX = 65;
 int DimMin = 30;
 int dur = 5000;
-int Deltadim = dur/(DimMAX - DimMin);
-unsigned long Delta = (unsigned long)Deltadim * (unsigned long)1000; 
-unsigned long tim;
+int Deltadim; //calcula el intervalo de tiempo para el dimmmer
+unsigned long Delta; // convierte Deltadim en milisegundos
+unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
 int horaPrender = 11;
@@ -107,36 +107,35 @@ void StatusSol()
 {
   int  hr = hour();
   int  mini = minute();
-   Serial.println("Paso a verificar el estdo de luces");
-  if(hr >= horaPrender && hr < horaApagar)
+
+  //estas variables internas convierten todas las horas en segundos para evaluar la duracion
+  // de los periodos de amanecer y atardecer en base al tiempo disponible antes de la siguiente alarma
+  unsigned long diff;
+  unsigned long sec_now = (hr*3600)+(mini*60);
+  unsigned long sec_hp = (horaPrender*3600)+(minutoPrender*60);
+  unsigned long sec_ii = (hrinidia*3600)+(mininidia*60);
+  unsigned long sec_fi = (hrfindia*3600)+(minfindia*60);
+  unsigned long sec_ap = (horaApagar*3600)+(minutoApagar*60);
+
+  Serial.println("Paso a verificar el estdo de luces");
+  if(sec_now > sec_hp && sec_now < sec_ap)
       { 
-        if(hr == horaPrender && mini > minutoPrender)
+        if(sec_now > sec_hp && sec_now < sec_ii)
          {
+          diff = sec_ii - sec_now;   
+           if(diff < dur) dur = diff;
           Amanecer();
           return;
          }
-        if (hr >= hrinidia && hr <= hrfindia)
+        if (sec_now > sec_ii && sec_now < sec_fi)
           {
-            if(hr == hrfindia && mini > minfindia)
-            {
-              Atardecer();
-              return;
-            }
-            if(hr == hrinidia && mini < mininidia)
-            {
-              Amanecer();
-              return;
-            }
             Pleno_dia();
             return;
           }
-        if(hr > horaPrender && hr < hrinidia)
-        {
-          Amanecer();
-          return;
-        }
-        if(hr > hrfindia && hr <= horaApagar)
+        if(sec_now > sec_fi && sec_now < sec_ap)
          { 
+           diff = sec_ap - sec_now;   
+           if(diff < dur) dur = diff;  
            Atardecer();
            return;
          }  
@@ -186,6 +185,8 @@ void Amanecer()
 {
    momento = "Amanecer";
    Serial.println("Amanecer");
+   Deltadim = dur/(DimMAX - DimMin); //calcula el intervalo del tiempo para el dimmer
+   Delta = (unsigned long)Deltadim * (unsigned long)1000; // convierte Deltadim en milisegundos
    tim = millis();
    Dimm=DimMin;
    if(!dimmer.getState()) dimmer.setState(ON);
@@ -218,7 +219,9 @@ void Pleno_dia()
 
 void Atardecer()
 { 
-momento = "Atardecer";
+ momento = "Atardecer";
+ Deltadim = dur/(DimMAX - DimMin); //calcula el intervalo del tiempo para el dimmer
+ Delta = (unsigned long)Deltadim * (unsigned long)1000; // convierte Deltadim en milisegundos
  if(!dimmer.getState()) dimmer.setState(ON);
  Serial.println("Atardecer");
  tim = millis();
