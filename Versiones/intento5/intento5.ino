@@ -1,6 +1,6 @@
 #include <Wire.h>    //  libreria para interfaz I2C
-#include <RTClib.h>   //  libreria para el manejo del modulo RTC
-#include <RBDdimmer.h> // libreria del dimmer AC sadasdsa
+#include "RTClib.h"   //  libreria para el manejo del modulo RTC
+#include <RBDdimmer.h> // libreria del dimmer AC 
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <OneWire.h> 
@@ -10,7 +10,7 @@
 #include <DHT_U.h>
 
 RTC_DS3231 rtc;     // crea objeto del tipo RTC_DS3231
-char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mier", "Jue", "Vie", "Sab"};
+char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
 
 // DHT humidity sensor
 int DHTPIN = 10;
@@ -54,11 +54,11 @@ unsigned long tim;  // es el valor de los milis dentro de las funciones de dimme
 int horaPrender = 11;
 int minutoPrender = 00;
 
-int hrinidia = 13;
-int mininidia = 40;
+int hrinidia = 14;
+int mininidia = 10;
 
 //********** Hora de comienzo del atardecer
-int hrfindia = 18;
+int hrfindia = 20;
 int minfindia = 00;
 
 //********** Hora de apagado
@@ -91,18 +91,20 @@ digitalWrite(RELE, HIGH);
 //inicializando modulos de Temperatura de agua y de ambiente/Humedad
 dht.begin();
 sensor_t sensor;
-
-
 sensors.begin();
+
+//inicializacion de funciones para primeras variables
 encendidos();
+readSensors();
 StatusSol();
-Alarm.timerRepeat(60, sendStatus);
+Alarm.timerRepeat(60, readSensors);
 }
 
-void loop () {       // funcion que devuelve fecha y horario en formato DateTime y asigna a variable fecha
+void loop () {       
 
-    Alarm.delay(1000);           // demora de 1 segundo
-    
+    sendStatus();// funcion que devuelve fecha y horario en formato DateTime y asigna a variable fecha
+    Alarm.delay(5000);           // demora de 1 segundo
+
 }
 void StatusSol()
 {
@@ -154,7 +156,6 @@ void StatusSol()
 }
 
 void sendStatus() {
-  readSensors();
   DateTime now = rtc.now();
   Serial.print("LOG");
   Serial.print("||");
@@ -179,6 +180,7 @@ void sendStatus() {
   Serial.print(aquariumTemp);
   Serial.print("||");
   Serial.println(momento);
+  return;
 }
 
 void readSensors() {
@@ -199,8 +201,8 @@ void Amanecer()
         Deltadim = dur_temp/(DimMAX - DimMin); //calcula el intervalo del tiempo para el dimmer
         Delta = (unsigned long)Deltadim * (unsigned long)1000; // convierte Deltadim en milisegundos  
         Serial.print(" reduccion del amanecer por encendido. duracion:");
-        Serial.print(Delta);
-        Serial.print("milisegundos");
+        Serial.print(dur_temp);
+        Serial.print(" milisegundos");
       }
     else
       {
@@ -235,6 +237,7 @@ void Pleno_dia()
   dimmer.setPower(DimMAX);
   digitalWrite(RELE, LOW);
   Serial.println("Pleno Dia");
+  return;
 }
 
 void Atardecer()
