@@ -11,7 +11,7 @@
 
 RTC_DS3231 rtc;     // crea objeto del tipo RTC_DS3231
 char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
-
+/*
 // DHT humidity sensor
 int DHTPIN = 10;
 // Ambient status
@@ -19,6 +19,7 @@ float ambientTemp;
 float ambientHum;    // what pin we're connected to
 //#define DHTTYPE    DHT11   // DHT 22  (AM2302)
 DHT dht(DHTPIN, DHT11); //// Initialize DHT sensor for normal 16mhz Arduino
+*/
 
 // Water proof sensor DS18B20
 #define ONE_WIRE_BUS 8
@@ -59,7 +60,7 @@ int mininidia = 10;
 
 //********** Hora de comienzo del atardecer
 int hrfindia = 20;
-int minfindia = 00;
+int minfindia = 15;
 
 //********** Hora de apagado
 int horaApagar = 22;
@@ -84,16 +85,16 @@ if (!rtc.begin())
 // Sync time lib with RTC
 setSyncProvider(getRTCTime);
 setSyncInterval(60 * 60 * 4);
-// should run only once at initial setup
-sendStatus();
+
 digitalWrite(RELE, HIGH);    
 
 //inicializando modulos de Temperatura de agua y de ambiente/Humedad
-dht.begin();
+//dht.begin();
 sensor_t sensor;
 sensors.begin();
 
 //inicializacion de funciones para primeras variables
+sendStatus();
 encendidos();
 readSensors();
 StatusSol();
@@ -103,7 +104,7 @@ Alarm.timerRepeat(60, readSensors);
 void loop () {       
 
     sendStatus();// funcion que devuelve fecha y horario en formato DateTime y asigna a variable fecha
-    Alarm.delay(5000);           // demora de 1 segundo
+    Alarm.delay(3000);           // demora de 1 segundo
 
 }
 void StatusSol()
@@ -173,23 +174,27 @@ void sendStatus() {
   Serial.print(':');
   Serial.print(now.second(), DEC);
   Serial.print("||");
-  Serial.print(ambientTemp);
-  Serial.print("||");
-  Serial.print(ambientHum);
-  Serial.print("||");
+  //Serial.print(ambientTemp);
+  //Serial.print("||");
+  //Serial.print(ambientHum);
+  //Serial.print("||");
   Serial.print(aquariumTemp);
   Serial.print("||");
   Serial.println(momento);
+  Serial.print("||");
+  Serial.print(Dimm);
+  Serial.print("%");
+ 
   return;
 }
 
 void readSensors() {
   sensors.requestTemperatures();
   aquariumTemp = sensors.getTempCByIndex(0);
-  ambientTemp = dht.readTemperature();  // obtencion de valor de temperatura
-  Alarm.delay(2000);
-  ambientHum = dht.readHumidity();   // obtencion de valor de humedad
-
+  //ambientTemp = dht.readTemperature();  // obtencion de valor de temperatura
+  //Alarm.delay(2000);
+  //ambientHum = dht.readHumidity();   // obtencion de valor de humedad
+  Serial.println("leyendo el sensor...");
   }
 
 void Amanecer() 
@@ -256,7 +261,6 @@ void Atardecer()
       {
         Deltadim = dur/(DimMAX - DimMin); //calcula el intervalo del tiempo para el dimmer
         Delta = (unsigned long)Deltadim * (unsigned long)1000; // convierte Deltadim en milisegundos
-        Serial.print("dur temp es cero");
       };  
  if(!dimmer.getState()) dimmer.setState(ON);
  Serial.println("Atardecer");
