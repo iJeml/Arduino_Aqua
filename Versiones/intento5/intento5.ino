@@ -52,19 +52,19 @@ unsigned long Delta; // convierte Deltadim en milisegundos
 unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
-int horaPrender = 11;
+int horaPrender = 10;
 int minutoPrender = 00;
 
-int hrinidia = 14;
-int mininidia = 10;
+int hrinidia = 13;
+int mininidia = 00;
 
 //********** Hora de comienzo del atardecer
-int hrfindia = 20;
-int minfindia = 15;
+int hrfindia = 19;
+int minfindia = 00;
 
 //********** Hora de apagado
 int horaApagar = 22;
-int minutoApagar = 30;
+int minutoApagar = 00;
 
 
 void setup () {
@@ -180,11 +180,11 @@ void sendStatus() {
   //Serial.print("||");
   Serial.print(aquariumTemp);
   Serial.print("||");
-  Serial.println(momento);
+  Serial.print(momento);
   Serial.print("||");
-  Serial.print(Dimm);
-  Serial.print("%");
- 
+  Serial.print(dimmer.getPower());
+  Serial.println("%");
+  
   return;
 }
 
@@ -274,8 +274,9 @@ while(Dimm > DimMin)
     {
       tim +=Delta;   
       dimmer.setPower(Dimm);          // name.setPower(0%-100%)
-      Serial.print(dimmer.getPower());
-      Serial.println("%");
+      //Serial.print(dimmer.getPower());
+      //Serial.println("%");
+      sendStatus();
       if (Dimm == 45)
         {
          digitalWrite(RELE, HIGH);       
