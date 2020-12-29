@@ -8,9 +8,14 @@
                 "/Users/jeml/Library/Arduino15/packages/esp8266/tools/**",
                 "/Users/jeml/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",
                 "${workspaceFolder}/**",
-                "/Users/jeml/Documents/Arduino/**"
+                "/Users/jeml/Documents/Arduino/**",
+                "/Applications/Arduino.app/Contents/Java/hardware/tools/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**",
+                "/Users/jeml/Documents/Arduino/libraries/**"
             ],
-            "defines": [],
+            "defines": [
+                "USBCON"
+            ],
             "macFrameworkPath": [
                 "/System/Library/Frameworks",
                 "/Library/Frameworks"

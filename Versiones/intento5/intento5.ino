@@ -43,8 +43,8 @@ String momento; // variable de control para el proceso de Apagado de Luces
 // Variables para la definicion de Horarios
 
 int Dimm;
-int DimMAX = 65;
-int DimMin = 30;
+int DimMAX = 50;
+int DimMin = 28;
 int dur = 3600;
 unsigned long  dur_temp = 0;
 int Deltadim; //calcula el intervalo de tiempo para el dimmmer
@@ -52,18 +52,18 @@ unsigned long Delta; // convierte Deltadim en milisegundos
 unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
-int horaPrender = 10;
+int horaPrender = 12;
 int minutoPrender = 00;
 
-int hrinidia = 13;
+int hrinidia = 14;
 int mininidia = 00;
 
 //********** Hora de comienzo del atardecer
-int hrfindia = 19;
+int hrfindia = 18;
 int minfindia = 00;
 
 //********** Hora de apagado
-int horaApagar = 22;
+int horaApagar = 20;
 int minutoApagar = 00;
 
 
