@@ -5,7 +5,6 @@
 #include <TimeAlarms.h>
 #include <OneWire.h> 
 #include <DallasTemperature.h>
-//#include <Adafruit_Sensor.h>
 #include <LCD.h>			// libreria para funciones de LCD
 #include <LiquidCrystal_I2C.h>		// libreria para LCD por I2C
 
