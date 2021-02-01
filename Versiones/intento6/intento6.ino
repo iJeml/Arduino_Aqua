@@ -5,28 +5,28 @@
 #include <TimeAlarms.h>
 #include <OneWire.h> 
 #include <DallasTemperature.h>
-#include <Adafruit_Sensor.h>
-#include <DHT.h>
-#include <DHT_U.h>
+//#include <Adafruit_Sensor.h>
+#include <LCD.h>			// libreria para funciones de LCD
+#include <LiquidCrystal_I2C.h>		// libreria para LCD por I2C
+
 
 RTC_DS3231 rtc;     // crea objeto del tipo RTC_DS3231
 char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
-/*
-// DHT humidity sensor
-int DHTPIN = 10;
-// Ambient status
-float ambientTemp; 
-float ambientHum;    // what pin we're connected to
-//#define DHTTYPE    DHT11   // DHT 22  (AM2302)
-DHT dht(DHTPIN, DHT11); //// Initialize DHT sensor for normal 16mhz Arduino
-*/
 
-// Water proof sensor DS18B20
+//creacion objeto pantalla LCD
+LiquidCrystal_I2C lcd (0x27, 2, 1, 0, 4, 5, 6, 7); // DIR, E, RW, RS, D4, D5, D6, D7
+
+// Water proof and ambient sensor DS18B20
 #define ONE_WIRE_BUS 8
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 // Aquarium status
 float aquariumTemp;
+float ambientTemp;
+
+uint8_t sensor1[8] = {0x28, 0x20, 0x81, 0x83, 0x29, 0x20, 0x01, 0x7A};
+uint8_t sensor2[8] = {0x28, 0xAA, 0x21, 0x57, 0x13, 0x13, 0x02, 0x4D};
+
 
 //Dimmer para las luces blancas
 #define PIN_SALIDA_DIMMER  3        //Pines del dimmer
@@ -43,8 +43,8 @@ String momento; // variable de control para el proceso de Apagado de Luces
 // Variables para la definicion de Horarios
 
 int Dimm;
-int DimMAX = 40;
-int DimMin = 28;
+int DimMAX = 90;
+int DimMin = 30;
 int dur = 3600;
 unsigned long  dur_temp = 0;
 int Deltadim; //calcula el intervalo de tiempo para el dimmmer
@@ -52,19 +52,20 @@ unsigned long Delta; // convierte Deltadim en milisegundos
 unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
-int horaPrender = 13;
+int horaPrender = 11;
 int minutoPrender = 00;
 
-int hrinidia = 14;
+int hrinidia = 12;
 int mininidia = 00;
 
 //********** Hora de comienzo del atardecer
-int hrfindia = 18;
+int hrfindia = 19;
 int minfindia = 00;
 
 //********** Hora de apagado
-int horaApagar = 19;
+int horaApagar = 20;
 int minutoApagar = 00;
+
 
 void setup () {
  Serial.begin(9600);    // inicializa comunicacion serie a 9600 bps
@@ -84,12 +85,17 @@ if (!rtc.begin())
 // Sync time lib with RTC
 setSyncProvider(getRTCTime);
 setSyncInterval(60 * 60 * 4);
-
 digitalWrite(RELE, HIGH);    
+//inicializando pantalla
+lcd.setBacklightPin(3,POSITIVE);	// puerto P3 de PCF8574 como positivo
+lcd.setBacklight(HIGH);		// habilita iluminacion posterior de LCD
+lcd.begin(20,4);			// 20 columnas por 4 lineas para LCD 2004A
+lcd.clear();			// limpia pantalla
+
 
 //inicializando modulos de Temperatura de agua y de ambiente/Humedad
-//dht.begin();
-sensor_t sensor;
+
+//sensor_t sensor;
 sensors.begin();
 
 //inicializacion de funciones para primeras variables
@@ -103,7 +109,8 @@ Alarm.timerRepeat(60, readSensors);
 void loop () {       
 
     sendStatus();// funcion que devuelve fecha y horario en formato DateTime y asigna a variable fecha
-    Alarm.delay(3000);           // demora de 1 segundo
+    screen();
+    Alarm.delay(1000);           // demora de 1 segundo
 
 }
 void StatusSol()
@@ -157,6 +164,7 @@ void StatusSol()
 
 void sendStatus() {
   DateTime now = rtc.now();
+  readSensors();
   Serial.print("LOG");
   Serial.print("||");
   Serial.print(now.year(), DEC);
@@ -172,28 +180,63 @@ void sendStatus() {
   Serial.print(now.minute(), DEC);
   Serial.print(':');
   Serial.print(now.second(), DEC);
-  Serial.print("||");
-  //Serial.print(ambientTemp);
-  //Serial.print("||");
-  //Serial.print(ambientHum);
-  //Serial.print("||");
+  Serial.print("|Ambiente: ");
+  Serial.print(ambientTemp);
+  Serial.print("C|Acuario: ");
   Serial.print(aquariumTemp);
-  Serial.print("||");
+  Serial.print("C||");
   Serial.print(momento);
   Serial.print("||");
   Serial.print(dimmer.getPower());
-  Serial.println("%");
-  
+  Serial.println("%"); 
   return;
+}
+void screen()
+{
+  DateTime now = rtc.now();
+  readSensors();
+  lcd.setCursor(0, 0);
+  if (now.day() < 10)  lcd.print('0'); 
+  lcd.print(now.day(), DEC); 
+  lcd.print('/');
+  if (now.month() < 10)  lcd.print('0'); 
+  lcd.print(now.month(), DEC);
+  lcd.print('/');
+  lcd.print(now.year(), DEC);
+  lcd.print("  ");
+  if (now.hour() < 10)  lcd.print('0'); 
+  lcd.print(now.hour(), DEC);
+  lcd.print(':');
+  if (now.minute() < 10)  lcd.print('0'); 
+  lcd.print(now.minute(), DEC);
+  lcd.print(':');
+  if (now.second() < 10)  lcd.print('0'); 
+  lcd.print(now.second(), DEC);
+  lcd.setCursor(0, 1);
+  lcd.print("Amb:");
+  lcd.print(ambientTemp);
+  lcd.print("C Aq:");
+  lcd.print(aquariumTemp);
+  lcd.print("C");
+  lcd.setCursor(0, 2);
+  lcd.print(momento);
+  if (momento != "Noche")
+    {
+      lcd.print(": ");
+      lcd.print(dimmer.getPower());
+      lcd.print(" %");
+      lcd.noCursor();
+      return;
+    }
+  lcd.print("     "); 
+  lcd.noCursor();			// oculta cursor
 }
 
 void readSensors() {
   sensors.requestTemperatures();
-  aquariumTemp = sensors.getTempCByIndex(0);
-  //ambientTemp = dht.readTemperature();  // obtencion de valor de temperatura
-  //Alarm.delay(2000);
-  //ambientHum = dht.readHumidity();   // obtencion de valor de humedad
-  Serial.println("leyendo el sensor...");
+  // obtencion de valor de temperatura
+  ambientTemp = sensors.getTempC(sensor1);
+  aquariumTemp = sensors.getTempC(sensor2);
   }
 
 void Amanecer() 
@@ -212,7 +255,8 @@ void Amanecer()
       {
         Deltadim = dur/(DimMAX - DimMin); //calcula el intervalo del tiempo para el dimmer
         Delta = (unsigned long)Deltadim * (unsigned long)1000; // convierte Deltadim en milisegundos
-      };      
+      };
+   screen();         
    tim = millis();
    Dimm=DimMin;
    if(!dimmer.getState()) dimmer.setState(ON);
@@ -222,8 +266,10 @@ void Amanecer()
            if(millis() >= tim + Delta){
             tim +=Delta;   
             dimmer.setPower(Dimm);                                       // name.setPower(0%-100%)
-            Serial.print(dimmer.getPower());
-            Serial.println("%");
+            sendStatus();
+            screen();
+            //Serial.print(dimmer.getPower());
+            //Serial.println("%");
             if (Dimm == 45){
                 digitalWrite(RELE, LOW);       
                 Serial.println( "Luces complementarias encendidas" ); 
