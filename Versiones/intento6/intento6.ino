@@ -42,7 +42,7 @@ String momento; // variable de control para el proceso de Apagado de Luces
 // Variables para la definicion de Horarios
 
 int Dimm;
-int DimMAX = 90;
+int DimMAX = 75;
 int DimMin = 30;
 int dur = 3600;
 unsigned long  dur_temp = 0;
@@ -51,19 +51,19 @@ unsigned long Delta; // convierte Deltadim en milisegundos
 unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
-int horaPrender = 11;
+int horaPrender = 12;
 int minutoPrender = 00;
 
-int hrinidia = 12;
+int hrinidia = 13;
 int mininidia = 00;
 
 //********** Hora de comienzo del atardecer
-int hrfindia = 19;
-int minfindia = 00;
+int hrfindia = 18;
+int minfindia = 30;
 
 //********** Hora de apagado
 int horaApagar = 20;
-int minutoApagar = 00;
+int minutoApagar = 30;
 
 
 void setup () {
@@ -77,8 +77,8 @@ if (!rtc.begin())
  {       // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
   while (1);         // bucle infinito que detiene ejecucion del programa
  }
-//rtc.adjust(DateTime(__DATE__, __TIME__));   
-//Serial.println("Modulo RTC Ajustado !"); 
+rtc.adjust(DateTime(__DATE__, __TIME__));   
+Serial.println("Modulo RTC Ajustado !"); 
 // Use only without RTC
 // setTime(13,20,0,27,9,2020);
 // Sync time lib with RTC
@@ -227,7 +227,6 @@ void screen()
       lcd.noCursor();
       return;
     }
-  lcd.print("     "); 
   lcd.noCursor();			// oculta cursor
 }
 
@@ -321,6 +320,7 @@ while(Dimm > DimMin)
       //Serial.print(dimmer.getPower());
       //Serial.println("%");
       sendStatus();
+      screen();
       if (Dimm == 45)
         {
          digitalWrite(RELE, HIGH);       
@@ -335,6 +335,8 @@ while(Dimm > DimMin)
 void Noche()
 {
    momento = "Noche";
+   lcd.setCursor(0, 2);
+   lcd.print("                    "); 
    dimmer.setState(OFF);
    digitalWrite(RELE, HIGH);
    Serial.println("Noche");
