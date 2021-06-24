@@ -25,7 +25,7 @@ DHT dht(cult_sensor, DHT11);
 //declaraiones del sensor DHT para el indoor
 int Temp_cult;
 int Hum_cult ;
-int pant = 2;
+int pant = 1;
 
 
 
@@ -96,7 +96,7 @@ void setup () {
   {       // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
   while (1);         // bucle infinito que detiene ejecucion del programa
   }
-rtc.adjust(DateTime(__DATE__, __TIME__));   
+//rtc.adjust(DateTime(__DATE__, __TIME__));   
 Serial.println("Modulo RTC Ajustado !"); 
 // Use only without RTC
 // setTime(13,20,0,27,9,2020);
@@ -162,7 +162,6 @@ void loop ()
   if (pant == 1) scr_aqua();
   if (pant == 2) scr_indur();
   Alarm.delay(1000);           // demora de 1 segundo
-
 } 
 
 void Statusol()
@@ -217,7 +216,6 @@ void sendstatus()
   Serial.print(Temp_cult);
   Serial.print(" C||Humedad de Cultivo: ");
   Serial.print(Hum_cult);
-  Serial.println(" %");
   return;
 }
 
@@ -258,7 +256,7 @@ void scr_indur()
   lcd.print("Vent:");
 //lcd.print("") se debe imprimir el estado de los ventiladores
   lcd.noCursor();			// oculta cursor 
-  return; 
+//  return; 
 }
 
 void scr_aqua()
@@ -295,7 +293,7 @@ void scr_aqua()
   lcd.print(aquariumTemp);
   lcd.print("C");
   lcd.noCursor();			// oculta cursor 
-  return;
+  //return;
 }
 
 void readSensors() 
