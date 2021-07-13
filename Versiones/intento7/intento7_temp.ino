@@ -1,5 +1,6 @@
 #include <Wire.h>    //  libreria para interfaz I2C
 #include "RTClib.h"   //  libreria para el manejo del modulo RTC
+//#include <RBDdimmer.h> // libreria del dimmer AC 
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <OneWire.h> 
@@ -8,7 +9,6 @@
 #include <LiquidCrystal_I2C.h>		// libreria para LCD por I2C
 #include <DHT.h>    // importa la Librerias DHT
 #include <DHT_U.h>
-
 
 RTC_DS3231 rtc; // crea objeto del tipo RTC_DS3231
 
@@ -45,14 +45,13 @@ uint8_t sensor1[8] = {0x28, 0x20, 0x81, 0x83, 0x29, 0x20, 0x01, 0x7A};
 uint8_t sensor2[8] = {0x28, 0xAA, 0x21, 0x57, 0x13, 0x13, 0x02, 0x4D};
 
 
+//Dimmer para las luces blancas
+//#define PIN_SALIDA_DIMMER  3        //Pines del dimmer
+//#define ZEROCROSS  2
 
-
-#define Lamp_aq1 28     // dicroicas 
-#define Lamp_aq2 24    // lampara Ciclo
-#define Tom_aq3 26    // Bomba de circulacion
-
-
-
+#define Lamp_aq1 22     // donde se encuentra conectado el modulo de rele que corresponde a pin digital 22
+#define Lamp_aq2 24  
+#define Tom_aq3 26    // donde se encuentra conectado el modulo de rele que corresponde a pin digital 26 bomba
 
 String momento; // variable de control para el proceso de Apagado de Luces
          
@@ -60,10 +59,25 @@ String momento; // variable de control para el proceso de Apagado de Luces
 
 // Variables para la definicion de Horarios
 
+//int Dimm;
+//int DimMAX = 75;
+//int DimMin = 30;
+//int dur = 3600;
+//unsigned long  dur_temp = 0;
+//int Deltadim; //calcula el intervalo de tiempo para el dimmmer
+//unsigned long Delta; // convierte Deltadim en milisegundos
+//unsigned long tim;  // es el valor de los milis dentro de las funciones de dimmer
 
 //********** Hora de comienzo del amanecer
 int horaPrender = 12;
 int minutoPrender = 00;
+
+//int hrinidia = 13;
+//int mininidia = 00;
+
+//********** Hora de comienzo del atardecer
+//int hrfindia = 18;
+//int minfindia = 30;
 
 //********** Hora de apagado
 int horaApagar = 19;
@@ -72,28 +86,25 @@ int minutoApagar = 00;
 
 void setup () {
  Serial.begin(9600);    // inicializa comunicacion serie a 9600 bps
- pinMode(Lamp_aq1, OUTPUT);   // pin 22 para las luces secundarias
- pinMode(Lamp_aq2, OUTPUT);  //pin 24 lampara ciclo
- pinMode(Tom_aq3, OUTPUT); 
-
+ pinMode(Lamp_aq1, OUTPUT);   // pin 52 para las luces secundarias
+//dimmer.begin(NORMAL_MODE, OFF);       // si falla la inicializacion del modulo name.begin(MODE, STATE)  
+pinMode(Lamp_aq2, OUTPUT);
+pinMode(Tom_aq3, OUTPUT); 
 //Definiciones RTC
  if (!rtc.begin()) 
-  {               // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
+  {       // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
   while (1);         // bucle infinito que detiene ejecucion del programa
   }
-//rtc.adjust(DateTime(__DATE__, __TIME__));   
+rtc.adjust(DateTime(__DATE__, __TIME__));   
+Serial.println("Modulo RTC Ajustado !"); 
 // Use only without RTC
 // setTime(13,20,0,27,9,2020);
 // Sync time lib with RTC
 setSyncProvider(getRTCTime);
 setSyncInterval(60 * 60 * 4);
-Serial.println("Modulo RTC Ajustado !"); 
-
-//inicializacion de reles 
 digitalWrite(Lamp_aq1, HIGH);
 digitalWrite(Lamp_aq2, HIGH);
-digitalWrite(Tom_aq3, LOW);
-     
+digitalWrite(Tom_aq3, LOW);        
 //inicializando pantalla
 lcd.setBacklightPin(3,POSITIVE);	// puerto P3 de PCF8574 como positivo
 lcd.setBacklight(HIGH);		// habilita iluminacion posterior de LCD
@@ -103,7 +114,8 @@ lcd.clear();			// limpia pantalla
 // iniciando modulo de temperatura y humedad del cultivo 
 dht.begin(); 
 
-//inicializando modulos de Temperatura de agua y de ambiente
+//inicializando modulos de Temperatura de agua y de ambiente/Humedad
+
 //sensor_t sensor;
 sensors.begin();
 
@@ -135,14 +147,14 @@ void loop ()
     //lcd.setCursor(0,0);
     scr_aqua();
   }
-  if (xValue>=540 && xValue<=1023)
+  if (xValue<=1020 && xValue>=540)
    {
      lcd.clear();
      //lcd.setCursor(0,0);
      scr_indur();
    }
 
-  if (yValue>=540 && yValue<=1023)
+  if (yValue<=1020 && yValue>=540)
    {
      lcd.clear(); 
      //lcd.setCursor(0,0);
@@ -150,11 +162,7 @@ void loop ()
    }
   if (pant == 1) scr_aqua();
   if (pant == 2) scr_indur();
-  Alarm.delay(500);           // demora de 1 segundo
-  Serial.print("X ");
-  Serial.println(xValue);
-  Serial.print("Y");
-  Serial.println(yValue);
+  Alarm.delay(1000);           // demora de 1 segundo
 } 
 
 void Statusol()
@@ -209,7 +217,7 @@ void sendstatus()
   Serial.print(Temp_cult);
   Serial.print(" C||Humedad de Cultivo: ");
   Serial.print(Hum_cult);
-  //return;
+  return;
 }
 
 void scr_indur() 
@@ -249,7 +257,7 @@ void scr_indur()
   lcd.print("Vent:");
 //lcd.print("") se debe imprimir el estado de los ventiladores
   lcd.noCursor();			// oculta cursor 
-  //return; 
+//  return; 
 }
 
 void scr_aqua()
@@ -301,32 +309,28 @@ void readSensors()
 void Dia() 
 {
   momento = "Dia";
+  //dimmer.setState(ON);  
+  //dimmer.setPower(DimMAX);
   digitalWrite(Lamp_aq1, LOW);
   digitalWrite(Lamp_aq2, LOW);
   Serial.println("Dia");
+  return;
 }
        
 void Noche()
 {
    momento = "Noche";
+   lcd.setCursor(0, 2);
+   lcd.print("                    "); 
+   //dimmer.setState(OFF);
    digitalWrite(Lamp_aq1, HIGH);
    digitalWrite(Lamp_aq2, HIGH);
-   Serial.println(" Noche");
+   Serial.println("Noche");
   }
-void lcdoff()
-{
-  lcd.setBacklight(LOW);
-  }
-void lcdon()
-{
-  lcd.setBacklight(HIGH);
-  }     
 
 void encendidos() {
   Alarm.alarmRepeat(horaPrender, minutoPrender, 0, Dia);
   Alarm.alarmRepeat(horaApagar, minutoApagar, 0, Noche);
-  Alarm.alarmRepeat(23, 30, 0, lcdoff);
-  Alarm.alarmRepeat(8, 30, 0, lcdon);
   Alarm.timerRepeat(10, readSensors);
   Alarm.timerRepeat(10, amb_indoor);
   Alarm.timerRepeat(10, sendstatus);

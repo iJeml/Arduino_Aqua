@@ -12,23 +12,16 @@
 
 RTC_DS3231 rtc; // crea objeto del tipo RTC_DS3231
 
-
-int cult_sensor = 7; 
-DHT dht(cult_sensor, DHT11); 
+char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
 
 //valores para el joystick
 #define joyX A2
 #define joyY A3
 
 
-//declaraiones del sensor DHT para el indoor
-int Temp_cult;
-int Hum_cult ;
+//indicador de pantalla
 int pant = 1;
 
-
-
-char daysOfTheWeek[7][4] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
 
 //creacion objeto pantalla LCD
 LiquidCrystal_I2C lcd (0x27, 2, 1, 0, 4, 5, 6, 7); // DIR, E, RW, RS, D4, D5, D6, D7
@@ -46,28 +39,55 @@ uint8_t sensor2[8] = {0x28, 0xAA, 0x21, 0x57, 0x13, 0x13, 0x02, 0x4D};
 
 
 
-
+// pines digitales para control de reles
 #define Lamp_aq1 28     // dicroicas 
 #define Lamp_aq2 24    // lampara Ciclo
 #define Tom_aq3 26    // Bomba de circulacion
-
-
 
 
 String momento; // variable de control para el proceso de Apagado de Luces
          
 
 
-// Variables para la definicion de Horarios
+//***********Variables para la definicion de Horarios
 
 
-//********** Hora de comienzo del amanecer
+//Hora de comienzo del dia
 int horaPrender = 12;
 int minutoPrender = 00;
 
-//********** Hora de apagado
+//Hora de fin del dia
 int horaApagar = 19;
-int minutoApagar = 00;
+int minutoApagar = 30;
+
+//******************Variables del Indoor Growing********************
+
+int cult_sensor = 52; 
+DHT dht(cult_sensor, DHT22); 
+float Temp_cult;
+float Hum_cult;
+String estado;
+String Vent = "OFF";
+String air_flag = "OFF";
+// pines digitales para control de reles
+#define cult_luz 50     // Lampara 
+#define cult_air 48   // Ventiladores
+#define cult_Oz 46    // Posible Ozono
+
+//Hora del Sol
+int Horasol = 8;
+int minutosol = 00;
+
+//Hora de la Luna
+int horaluna = 20;
+int minutoLuna = 00;
+
+// Valores ambientales ideales
+int hum_min = 50;
+int hum_max =70;
+int Temp_min = 15;
+int Temp_max = 25;
+
 
 
 void setup () {
@@ -75,7 +95,9 @@ void setup () {
  pinMode(Lamp_aq1, OUTPUT);   // pin 22 para las luces secundarias
  pinMode(Lamp_aq2, OUTPUT);  //pin 24 lampara ciclo
  pinMode(Tom_aq3, OUTPUT); 
-
+ pinMode(cult_luz, OUTPUT);  // pin 3 como salida
+ pinMode(cult_air, OUTPUT);  // pin 4 como salida
+ pinMode(cult_Oz, OUTPUT);  // pin 5 como salida
 //Definiciones RTC
  if (!rtc.begin()) 
   {               // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
@@ -93,6 +115,9 @@ Serial.println("Modulo RTC Ajustado !");
 digitalWrite(Lamp_aq1, HIGH);
 digitalWrite(Lamp_aq2, HIGH);
 digitalWrite(Tom_aq3, LOW);
+digitalWrite(cult_luz, HIGH);
+digitalWrite(cult_air, HIGH);
+digitalWrite(cult_Oz, HIGH);
      
 //inicializando pantalla
 lcd.setBacklightPin(3,POSITIVE);	// puerto P3 de PCF8574 como positivo
@@ -111,11 +136,11 @@ sensors.begin();
 
 sendstatus();
 Statusol();
+Statusol_cult();
 encendidos();
 readSensors();
 amb_indoor();
-//scr_aqua();
-//scr_indur();
+est_indur();
 
 }
 
@@ -151,10 +176,6 @@ void loop ()
   if (pant == 1) scr_aqua();
   if (pant == 2) scr_indur();
   Alarm.delay(500);           // demora de 1 segundo
-  Serial.print("X ");
-  Serial.println(xValue);
-  Serial.print("Y");
-  Serial.println(yValue);
 } 
 
 void Statusol()
@@ -179,12 +200,28 @@ void Statusol()
   else Noche(); 
   return;    
 }
-
+void Statusol_cult()
+{
+  int  hr = hour();
+  int  mini = minute();
+  //estas variables internas convierten todas las horas en segundos para evaluar la duracion
+  // de los periodos de amanecer y atardecer en base al tiempo disponible antes de la siguiente alarma
+  unsigned long int diff;
+  unsigned long sec_now = (unsigned long) hr*3600 + (unsigned long) mini*60;
+  unsigned long cult_on = (unsigned long)Horasol*3600 + (unsigned long)minutosol*60;
+  unsigned long cult_off = (unsigned long)horaluna*3600 + (unsigned long)minutoLuna*60;
+  Serial.println("Paso a verificar el estdo de luces del cultivo");
+  if(sec_now > cult_on && sec_now < cult_off)
+    { 
+      Dia_cult();
+      return;
+    }
+  else Noche_cult(); 
+  return;    
+}
 void sendstatus() 
 {
   DateTime now = rtc.now();
-  //readSensors();
-  //amb_indoor();
   Serial.print("LOG");
   Serial.print("||");
   Serial.print(now.year(), DEC);
@@ -201,14 +238,18 @@ void sendstatus()
   Serial.print(':');
   Serial.print(now.second(), DEC);
   Serial.print("|Ambiente: ");
-  Serial.print(ambientTemp);
+  Serial.print(ambientTemp,1);
   Serial.print("C|Acuario: ");
-  Serial.print(aquariumTemp);
+  Serial.print(aquariumTemp,1);
   Serial.println(" C");
   Serial.print("Temp de cultivo: ");
   Serial.print(Temp_cult);
   Serial.print(" C||Humedad de Cultivo: ");
-  Serial.print(Hum_cult);
+  Serial.println(Hum_cult);
+  Serial.print("||Estado luz: ");
+  Serial.print(estado);
+  Serial.print("||vent: ");
+  Serial.println(Vent);  
   //return;
 }
 
@@ -237,17 +278,17 @@ void scr_indur()
   if (now.second() < 10)  lcd.print('0');
   lcd.print(now.second(), DEC);
   lcd.setCursor(0, 2);
-  lcd.print("Amb.:");
-  lcd.print(ambientTemp);
-  lcd.print("C/Cult:");
-  lcd.print(Temp_cult);
+  lcd.print("Amb:");
+  lcd.print(ambientTemp,1);
+  lcd.print("C/Cul:");
+  lcd.print(Temp_cult,1);
   lcd.print("C");
   lcd.setCursor(0, 3);
-  lcd.print("Hum: ");
-  lcd.print(Hum_cult);
-  lcd.print(" %");
+  lcd.print("Hum:");
+  lcd.print(Hum_cult,1);
+  lcd.print("%");
   lcd.print("Vent:");
-//lcd.print("") se debe imprimir el estado de los ventiladores
+  lcd.print(Vent); //se debe imprimir el estado de los ventiladores
   lcd.noCursor();			// oculta cursor 
   //return; 
 }
@@ -278,12 +319,12 @@ void scr_aqua()
   lcd.print(now.second(), DEC);
   lcd.setCursor(0, 2);
   lcd.print("Amb:");
-  lcd.print(ambientTemp);
+  lcd.print(ambientTemp,1);
   lcd.print("C ");
   lcd.print(momento);
   lcd.setCursor(0, 3);
   lcd.print("Agua:");
-  lcd.print(aquariumTemp);
+  lcd.print(aquariumTemp,1);
   lcd.print("C");
   lcd.noCursor();			// oculta cursor 
   //return;
@@ -300,7 +341,7 @@ void readSensors()
 
 void Dia() 
 {
-  momento = "Dia";
+  momento = "Dia  ";
   digitalWrite(Lamp_aq1, LOW);
   digitalWrite(Lamp_aq2, LOW);
   Serial.println("Dia");
@@ -328,16 +369,80 @@ void encendidos() {
   Alarm.alarmRepeat(23, 30, 0, lcdoff);
   Alarm.alarmRepeat(8, 30, 0, lcdon);
   Alarm.timerRepeat(10, readSensors);
-  Alarm.timerRepeat(10, amb_indoor);
   Alarm.timerRepeat(10, sendstatus);
   Serial.println("Paso a setear las alarmas");
 }
-
+//**************Funciones del Indoor
 void amb_indoor(){
   Temp_cult = dht.readTemperature();  // obtencion de valor de temperatura cultivo
   Hum_cult = dht.readHumidity();   // obtencion de valor de humedad cultivo
 }
+void Dia_cult() 
+{
+  estado = "Sol";
+  digitalWrite(cult_luz, LOW);
+}
+       
+void Noche_cult()
+{
+   estado = "Luna";
+   digitalWrite(cult_luz, HIGH);
+}
 
+void airon() 
+{
+  Vent = "ON ";
+  digitalWrite(cult_air, LOW);
+}
+       
+void airoff()
+{
+   Vent = "OFF";
+   digitalWrite(cult_air, HIGH);
+  }
+  
+void tempumcont()
+{
+  Serial.print("entra al control de ambiente");
+ if (air_flag == "OFF" && (Temp_cult > Temp_max || Hum_cult > hum_max) )
+    { 
+      Serial.println("bajar temp o hum");
+      airon();
+      return;
+    }
+  if (Temp_cult <= Temp_min && Hum_cult <= hum_min && air_flag == "OFF" )
+    { 
+      Serial.println("temp o hum ok");
+      airoff();
+      return;
+    }         
+}  
+
+void air_renew_fin()
+{
+   Vent = "OFF";
+   digitalWrite(cult_air, HIGH);
+   air_flag="OFF";
+   Serial.println("Fin de Renovacion de Aire");
+}
+
+void air_renew ()
+{
+    air_flag="ON";
+    Serial.println("Aire programado");
+    airon();
+    Alarm.timerOnce(180, air_renew_fin);
+}
+
+void est_indur() {
+  Alarm.alarmRepeat(Horasol, minutosol, 0, Dia_cult);
+  Alarm.alarmRepeat(horaluna, minutoLuna, 0, Noche_cult);
+  Alarm.timerRepeat(10, amb_indoor);
+  Alarm.timerRepeat(1800, air_renew);
+  Alarm.timerRepeat(60, tempumcont);  
+  Serial.println("Paso a setear las alarmas del indoor");
+}
+// Funcion de Setting del RTC
 time_t getRTCTime() {
   DateTime now = rtc.now();
   Serial.println("Sync RTC time");
