@@ -40,9 +40,9 @@ uint8_t sensor2[8] = {0x28, 0xAA, 0x21, 0x57, 0x13, 0x13, 0x02, 0x4D};
 
 
 // pines digitales para control de reles
-#define Lamp_aq1 28     // dicroicas 
 #define Lamp_aq2 24    // lampara Ciclo
 #define Tom_aq3 26    // Bomba de circulacion
+#define Lamp_aq1 28     // dicroicas 
 
 
 String momento; // variable de control para el proceso de Apagado de Luces
@@ -57,8 +57,8 @@ int horaPrender = 12;
 int minutoPrender = 00;
 
 //Hora de fin del dia
-int horaApagar = 19;
-int minutoApagar = 30;
+int horaApagar = 20;
+int minutoApagar = 00;
 
 //******************Variables del Indoor Growing********************
 
@@ -70,23 +70,24 @@ String estado;
 String Vent = "OFF";
 String air_flag = "OFF";
 // pines digitales para control de reles
-#define cult_luz 50     // Lampara 
-#define cult_air 48   // Ventiladores
-#define cult_Oz 46    // Posible Ozono
+
+#define cult_luz 40     // Lampara 
+#define cult_air 42   //Ventiladores este rele parece estar danao del modulo de 2 reles
+#define cult_Oz 44    // Posible Ozono
 
 //Hora del Sol
-int Horasol = 8;
-int minutosol = 00;
+int Horasol = 7;
+int minutosol = 30;
 
 //Hora de la Luna
-int horaluna = 20;
-int minutoLuna = 00;
+int horaluna = 22;
+int minutoLuna = 30;
 
 // Valores ambientales ideales
-int hum_min = 50;
-int hum_max =70;
-int Temp_min = 15;
-int Temp_max = 25;
+float hum_min = 50.0;
+float hum_max =65.0;
+float Temp_min = 15.5;
+float Temp_max = 27.0;
 
 
 
@@ -95,17 +96,18 @@ void setup () {
  pinMode(Lamp_aq1, OUTPUT);   // pin 22 para las luces secundarias
  pinMode(Lamp_aq2, OUTPUT);  //pin 24 lampara ciclo
  pinMode(Tom_aq3, OUTPUT); 
- pinMode(cult_luz, OUTPUT);  // pin 3 como salida
- pinMode(cult_air, OUTPUT);  // pin 4 como salida
- pinMode(cult_Oz, OUTPUT);  // pin 5 como salida
+ pinMode(cult_luz, OUTPUT);  // pin 50 como salida
+ pinMode(cult_air, OUTPUT);  // pin 48 como salida
+ pinMode(cult_Oz, OUTPUT);  // pin 46 como salida
 //Definiciones RTC
  if (!rtc.begin()) 
   {               // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
   while (1);         // bucle infinito que detiene ejecucion del programa
   }
+
 //rtc.adjust(DateTime(__DATE__, __TIME__));   
 // Use only without RTC
-// setTime(13,20,0,27,9,2020);
+// setTime(23,31,0,8,8,2021);
 // Sync time lib with RTC
 setSyncProvider(getRTCTime);
 setSyncInterval(60 * 60 * 4);
@@ -141,6 +143,7 @@ encendidos();
 readSensors();
 amb_indoor();
 est_indur();
+lcdstatus();
 
 }
 
@@ -175,8 +178,15 @@ void loop ()
    }
   if (pant == 1) scr_aqua();
   if (pant == 2) scr_indur();
-  Alarm.delay(500);           // demora de 1 segundo
+  Alarm.delay(500);           // demora de 0.5 segundos
 } 
+//estado del lcd luego de un reinicio fuera de horario
+void lcdstatus()
+{
+  int  hr = hour();
+  int  mini = minute();
+  if ((hr>= 23 && mini>= 30) || (hr<= 8 && mini<= 30)) lcdoff();
+}
 
 void Statusol()
 {
@@ -403,7 +413,7 @@ void airoff()
   
 void tempumcont()
 {
-  Serial.print("entra al control de ambiente");
+  Serial.println("entra al control de ambiente");
  if (air_flag == "OFF" && (Temp_cult > Temp_max || Hum_cult > hum_max) )
     { 
       Serial.println("bajar temp o hum");
