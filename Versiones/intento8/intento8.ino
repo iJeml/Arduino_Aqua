@@ -76,12 +76,12 @@ String air_flag = "OFF";
 #define cult_Oz 44    // Posible Ozono
 
 //Hora del Sol
-int Horasol = 7;
-int minutosol = 30;
+int Horasol = 6;
+int minutosol = 0;
 
 //Hora de la Luna
-int horaluna = 22;
-int minutoLuna = 30;
+int horaluna = 23;
+int minutoLuna = 59;
 
 // Valores ambientales ideales
 float hum_min = 50.0;
