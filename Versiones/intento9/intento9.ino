@@ -40,9 +40,9 @@ uint8_t sensor2[8] = {0x28, 0xAA, 0x21, 0x57, 0x13, 0x13, 0x02, 0x4D};
 
 
 // pines digitales para control de reles
-#define Lamp_aq2 24    // lampara Ciclo
-#define Tom_aq3 26    // Filtro Canister
-#define Lamp_aq1 28     // dicroicas 
+#define Lamp_aq 24    // lampara Ciclo
+#define filter 26    // Filtro Canister
+#define co2 28     //  CO2 selenoide
 
 
 String momento; // variable de control para el proceso de Apagado de Luces
@@ -67,13 +67,13 @@ DHT dht(cult_sensor, DHT22);
 float Temp_cult;
 float Hum_cult;
 String estado;
-String Vent = "OFF";
+String Vent = "ON";
 String air_flag = "OFF";
 // pines digitales para control de reles
 
-#define cult_luz 40     // Lampara 
-#define cult_air 42   //Ventiladores este rele parece estar danao del modulo de 2 reles
-#define cult_Oz 44    // Posible Ozono
+#define aire 36     // Corriente de los extractores 
+#define cult_hz 32   //Humificador /futuro ozono
+#define cult_luz 44    // Lampara
 
 //Hora del Sol
 int Horasol =  16;
@@ -93,12 +93,13 @@ float Temp_max = 27.0;
 
 void setup () {
  Serial.begin(9600);    // inicializa comunicacion serie a 9600 bps
- pinMode(Lamp_aq1, OUTPUT);   // pin 22 para las luces secundarias
- pinMode(Lamp_aq2, OUTPUT);  //pin 24 lampara ciclo
- pinMode(Tom_aq3, OUTPUT); 
- pinMode(cult_luz, OUTPUT);  // pin 50 como salida
- pinMode(cult_air, OUTPUT);  // pin 48 como salida
- pinMode(cult_Oz, OUTPUT);  // pin 46 como salida
+ pinMode(co2, OUTPUT);   // pin 22 para las luces secundarias
+ pinMode(Lamp_aq, OUTPUT);  //pin 24 lampara ciclo
+ pinMode(filter, OUTPUT); 
+ // variables de los reles del indoor
+ pinMode(aire, OUTPUT);  // pin 50 como salida
+ pinMode(cult_luz, OUTPUT);  // pin 44 como salida
+ pinMode(cult_hz, OUTPUT);  // pin 42 como salida
 //Definiciones RTC
  if (!rtc.begin()) 
   {               // si falla la inicializacion del modulo  Serial.println("Modulo RTC no encontrado !");  // muestra mensaje de error
@@ -114,12 +115,12 @@ setSyncInterval(60 * 60 * 4);
 Serial.println("Modulo RTC Ajustado !"); 
 
 //inicializacion de reles 
-digitalWrite(Lamp_aq1, HIGH);
-digitalWrite(Lamp_aq2, HIGH);
-digitalWrite(Tom_aq3, LOW);
+digitalWrite(co2, HIGH);
+digitalWrite(Lamp_aq, HIGH);
+digitalWrite(filter, LOW);
+digitalWrite(aire, HIGH);
 digitalWrite(cult_luz, HIGH);
-digitalWrite(cult_air, HIGH);
-digitalWrite(cult_Oz, HIGH);
+digitalWrite(cult_hz, HIGH);
      
 //inicializando pantalla
 lcd.setBacklightPin(3,POSITIVE);	// puerto P3 de PCF8574 como positivo
@@ -352,16 +353,16 @@ void readSensors()
 void Dia() 
 {
   momento = "Dia  ";
-  digitalWrite(Lamp_aq1, LOW);
-  digitalWrite(Lamp_aq2, LOW);
+  digitalWrite(co2, LOW);
+  digitalWrite(Lamp_aq, LOW);
   Serial.println("Dia");
 }
        
 void Noche()
 {
    momento = "Noche";
-   digitalWrite(Lamp_aq1, HIGH);
-   digitalWrite(Lamp_aq2, HIGH);
+   digitalWrite(co2, HIGH);
+   digitalWrite(co2, HIGH);
    Serial.println(" Noche");
   }
 void lcdoff()
@@ -399,16 +400,16 @@ void Noche_cult()
    digitalWrite(cult_luz, HIGH);
 }
 
-void airon() 
+/*void airon() 
 {
   Vent = "ON ";
-  digitalWrite(cult_air, LOW);
+  digitalWrite(cult_aire, LOW);
 }
        
 void airoff()
 {
    Vent = "OFF";
-   digitalWrite(cult_air, HIGH);
+   digitalWrite(cult_aire, HIGH);
   }
   
 void tempumcont()
@@ -431,7 +432,7 @@ void tempumcont()
 void air_renew_fin()
 {
    Vent = "OFF";
-   digitalWrite(cult_air, HIGH);
+   digitalWrite(cult_aire, HIGH);
    air_flag="OFF";
    Serial.println("Fin de Renovacion de Aire");
 }
@@ -442,14 +443,14 @@ void air_renew ()
     Serial.println("Aire programado");
     airon();
     Alarm.timerOnce(180, air_renew_fin);
-}
+}*/
 
 void est_indur() {
   Alarm.alarmRepeat(Horasol, minutosol, 0, Dia_cult);
   Alarm.alarmRepeat(horaluna, minutoLuna, 0, Noche_cult);
   Alarm.timerRepeat(10, amb_indoor);
-  Alarm.timerRepeat(60, air_renew);
-  Alarm.timerRepeat(60, tempumcont);  
+  //Alarm.timerRepeat(60, air_renew);
+  //Alarm.timerRepeat(60, tempumcont);  
   Serial.println("Paso a setear las alarmas del indoor");
 }
 // Funcion de Setting del RTC
