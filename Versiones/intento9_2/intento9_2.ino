@@ -58,8 +58,6 @@ String CO2= "OFF"; // flag del CO2
 //Hora de comienzo del dia
 int horaPrender = 11;
 int minutoPrender = 30;
-int horaco2  = horaPrender-2;
-int minutoco2 = minutoPrender;
 
 //Hora de fin del dia
 int horaApagar = 20;
@@ -103,13 +101,12 @@ void setup () {
  pinMode(co2, OUTPUT);   // pin 22 para las luces secundarias
  pinMode(Lamp_aq, OUTPUT);  //pin 24 lampara ciclo
  pinMode(filter, OUTPUT); 
- pinMode(pulsa, INPUT);		// pulsador como entrada 
-
  // variables de los reles del indoor
  pinMode(aire, OUTPUT);  // pin 50 como salida
  pinMode(cult_luz, OUTPUT);  // pin 44 como salida
  pinMode(cult_hz, OUTPUT);  // pin 42 como salida
  
+ pinMode(pulsa, INPUT);		// pulsador como entrada
 
 //Definiciones RTC
  if (!rtc.begin()) 
@@ -192,6 +189,9 @@ void loop ()
   if (pant == 1) scr_aqua();
   if (pant == 2) scr_indur();
   if (pant==1 && bomba==0) filtro();
+  Serial.println(xValue);
+  Serial.println(yValue);
+  Serial.println(bomba);
   Alarm.delay(500);           // demora de 0.5 segundos
 } 
 //estado del lcd luego de un reinicio fuera de horario
@@ -211,18 +211,11 @@ void Statusol()
   unsigned long int diff;
   unsigned long sec_now = (unsigned long) hr*3600 + (unsigned long) mini*60;
   unsigned long sec_on = (unsigned long)horaPrender*3600 + (unsigned long)minutoPrender*60;
-  unsigned long sec_co2 = (unsigned long)horaco2*3600 + (unsigned long)minutoco2*60;
   unsigned long sec_off = (unsigned long)horaApagar*3600 + (unsigned long)minutoApagar*60;
   Serial.println(sec_off);
   Serial.println(sec_now);
   Serial.println(sec_on);
   Serial.println("Paso a verificar el estdo de luces");
-  if(sec_now > sec_co2 && sec_now < sec_off)
-    { 
-      Dia_CO2();
-      Serial.println("paso a encender el co2");
-      
-    }
   if(sec_now > sec_on && sec_now < sec_off)
     { 
       Dia();
@@ -391,7 +384,7 @@ void Dia()
 }
 void Dia_CO2() 
 {
-  CO2 = "ON ";
+  CO2 = "ON";
   digitalWrite(co2, LOW);
   Serial.println("CO2 encendido");
 }
@@ -399,7 +392,6 @@ void Dia_CO2()
 void Noche()
 {
    momento = "Noche";
-   CO2 = "OFF";
    digitalWrite(co2, HIGH);
    digitalWrite(Lamp_aq, HIGH);
    Serial.println(" Noche");
@@ -415,7 +407,7 @@ void lcdon()
 
 void encendidos() {
   Alarm.alarmRepeat(horaPrender, minutoPrender, 0, Dia);
-  Alarm.alarmRepeat(horaco2, minutoco2, 0, Dia_CO2);
+  Alarm.alarmRepeat((horaPrender-2), minutoPrender, 0, Dia_CO2);
   Alarm.alarmRepeat(horaApagar, minutoApagar, 0, Noche);
   Alarm.alarmRepeat(23, 00, 0, lcdoff);
   Alarm.alarmRepeat(8, 00, 0, lcdon);
@@ -432,16 +424,12 @@ void Dia_cult()
 {
   estado = "Sol";
   digitalWrite(cult_luz, LOW);
-  Serial.println("es de dia");
-
-  
 }
        
 void Noche_cult()
 {
    estado = "Luna";
    digitalWrite(cult_luz, HIGH);
-   Serial.println("es de noche");
 }
 
 /*void airon() 
