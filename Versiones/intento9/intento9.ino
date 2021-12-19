@@ -81,11 +81,11 @@ String air_flag = "OFF";
 #define cult_luz 44    // Lampara
 
 //Hora del Sol
-int Horasol =  22;
+int horasol =  8;
 int minutosol = 00;
 
 //Hora de la Luna
-int horaluna = 12;
+int horaluna = 22;
 int minutoLuna = 00;
 
 int tiempocomida = 2;
@@ -239,15 +239,24 @@ void Statusol_cult()
   // de los periodos de amanecer y atardecer en base al tiempo disponible antes de la siguiente alarma
   unsigned long int diff;
   unsigned long sec_now = (unsigned long) hr*3600 + (unsigned long) mini*60;
-  unsigned long cult_on = (unsigned long)Horasol*3600 + (unsigned long)minutosol*60;
+  unsigned long cult_on = (unsigned long)horasol*3600 + (unsigned long)minutosol*60;
   unsigned long cult_off = (unsigned long)horaluna*3600 + (unsigned long)minutoLuna*60;
   Serial.println("Paso a verificar el estdo de luces del cultivo");
-  if((sec_now > cult_on && sec_now < 86340)||(sec_now < cult_off))
+  Serial.print(sec_now);
+  Serial.println(" seg ahora");
+  Serial.print(cult_on);
+  Serial.println("seg ON");
+  Serial.print(cult_off);
+  Serial.println("seg OFF");
+  //if((sec_now > cult_on && sec_now < 86340)||(sec_now < cult_off))
+  if(sec_now > cult_on && sec_now < cult_off)
     { 
       Dia_cult();
+      Serial.println("Entro en el dia");
       return;
     }
   else Noche_cult(); 
+       Serial.println("Entro en la noche");
   return;    
 }
 void sendstatus() 
@@ -490,7 +499,7 @@ void air_renew ()
 }*/
 
 void est_indur() {
-  Alarm.alarmRepeat(Horasol, minutosol, 0, Dia_cult);
+  Alarm.alarmRepeat(horasol, minutosol, 0, Dia_cult);
   Alarm.alarmRepeat(horaluna, minutoLuna, 0, Noche_cult);
   Alarm.timerRepeat(10, amb_indoor);
   //Alarm.timerRepeat(60, air_renew);

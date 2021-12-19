@@ -3,5 +3,5 @@
     "configuration": "cpu=atmega2560",
     "port": "/dev/tty.wchusbserialfa130",
     "programmer": "AVRISP mkII",
-    "sketch": "Versiones/intento5/intento5.ino"
+    "sketch": "Versiones/intento9/intento9.ino"
 }

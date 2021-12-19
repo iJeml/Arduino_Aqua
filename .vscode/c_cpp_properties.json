@@ -9,14 +9,15 @@
             "includePath": [
                 "/Applications/Arduino.app/Contents/Java/tools/**",
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/**",
-                "/Users/jeml/Library/Arduino15/packages/esp8266/tools/**",
-                "/Users/jeml/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.4/**",
+                "/Users/jhoan/Library/Arduino15/packages/esp8266/tools/**",
+                "/Users/jhoan/Library/Arduino15/packages/esp8266/hardware/esp8266/3.0.2/**",
                 "${workspaceFolder}/**",
-                "/Users/jeml/Documents/Arduino/**",
+                "/Users/jhoan/Documents/Arduino/**",
                 "/Volumes/Recovery Disk/Users/jhoan/Documents/Arduino/**",
                 "/Applications/Arduino.app/Contents/Java/hardware/tools/**",
                 "/Applications/Arduino.app/Contents/Java/libraries/**",
-                "/Users/jeml/Documents/Arduino/libraries/**"
+                "/Volumes/mainssd/Users/jhoanm./Documents/Arduino/libraries",
+                "/Users/jhoan/Documents/Arduino/libraries/**"
             ],
             "forcedInclude": [
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino/Arduino.h"
@@ -47,13 +48,13 @@
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/src",
                 "/Users/jhoan/Documents/Arduino/libraries/RTClib/src",
                 "/Users/jhoan/Documents/Arduino/libraries/Adafruit_BusIO",
-                "/Users/jhoan/Documents/Arduino/libraries/RBDDimmer-master/src",
                 "/Users/jhoan/Documents/Arduino/libraries/TimeAlarms",
                 "/Users/jhoan/Documents/Arduino/libraries/Time",
                 "/Users/jhoan/Documents/Arduino/libraries/OneWire",
                 "/Users/jhoan/Documents/Arduino/libraries/DallasTemperature",
-                "/Users/jhoan/Documents/Arduino/libraries/Adafruit_Unified_Sensor",
+                "/Users/jhoan/Documents/Arduino/libraries/New-LiquidCrystal",
                 "/Users/jhoan/Documents/Arduino/libraries/DHT_sensor_library",
+                "/Users/jhoan/Documents/Arduino/libraries/Adafruit_Unified_Sensor",
                 "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SPI/src",
                 "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/lib/gcc/avr/7.3.0/include",
                 "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/lib/gcc/avr/7.3.0/include-fixed",
